@@ -1,0 +1,12 @@
+# Virtual environment
+venv/
+
+# Python compilation files 
+__pycache__/
+*.pyc
+
+# Local environment changes 
+.env
+
+# Local docker files 
+.dockerignore
