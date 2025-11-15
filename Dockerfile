@@ -1,0 +1,13 @@
+FROM python:3.14.0-slim-bookworm
+
+ENV PYTHONUNBUFFERED=1
+ENV APP_HOME=/app
+
+WORKDIR $APP_HOME
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY jdccabanga/ $APP_HOME/jdccabanga/
+
+CMD ["python", "-m", "jdccabanga.main"]
