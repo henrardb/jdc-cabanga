@@ -6,12 +6,10 @@ import os
 
 def send_daily_report(report_content: str, subject: str = "JDC Cabanga Report"):
     SMTP_SERVER = os.getenv("SMTP_SERVER")
-    SMTP_PORT = os.getenv("SMTP_PORT")
+    SMTP_PORT = int(os.getenv("SMTP_PORT"))
     SENDER_EMAIL = os.getenv("SENDER_EMAIL")
     RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
     SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-
-    print(f"DEBUG: {SMTP_SERVER}, {SMTP_PORT}, {SENDER_EMAIL},{RECEIVER_EMAIL},{SMTP_PASSWORD}")
 
     if not all([SENDER_EMAIL, RECEIVER_EMAIL, SMTP_PASSWORD, SMTP_SERVER, SMTP_PORT]):
         print("Environment variables missing")
@@ -22,8 +20,6 @@ def send_daily_report(report_content: str, subject: str = "JDC Cabanga Report"):
     msg['Subject'] = subject
     msg['To'] = RECEIVER_EMAIL
     msg.attach(MIMEText(report_content, "plain"))
-
-    server = None
 
     try:
         context = ssl.create_default_context()
