@@ -6,7 +6,7 @@ __pycache__/
 *.pyc
 
 # Local environment changes 
-.env
+*.env
 
 # Local docker files 
 .dockerignore

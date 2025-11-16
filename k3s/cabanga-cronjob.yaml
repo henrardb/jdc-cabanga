@@ -10,12 +10,12 @@ spec:
         spec:
           containers:
           - name: jdccabanga
-            image: brunoh6720/jdc-cabanga:latest
+            image: brunoh6720/jdc-cabanga:v3
             imagePullPolicy: IfNotPresent
 
             envFrom:
             - secretRef:
-                  name: cabanga-secret
+                  name: cabanga-secrets
 
 
           restartPolicy: OnFailure

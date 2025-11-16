@@ -7,14 +7,15 @@ import sys
 from datetime import date, timedelta
 from jdccabanga.models import Lesson
 from .auth_manager import refresh_access_token
+from .notifier import send_daily_report
 
 
 SCHOOL_CODE = os.getenv("SCHOOL_CODE")
 REFRESH_TOKEN = os.getenv("REFRESH_TOKEN")
 STUDENT_ID = os.getenv("STUDENT_ID")
 
-TODAY = date(2025, 11, 13)
-END_DATE = TODAY + timedelta(days=7)
+TODAY = date(2025, 11, 17)
+END_DATE = TODAY + timedelta(days=14)
 
 DIARY_URL = (
     f"https://api.scolares.be/cabanga/api/schools/{SCHOOL_CODE}/students/{STUDENT_ID}/diary"
@@ -63,17 +64,11 @@ if __name__ == "__main__":
         data = get_diary_data(access_token, DIARY_URL)
 
         if data:
-            # print("--- Received JSON ---")
-            print(json.dumps(data, indent=4))
-            # print(f"Number of elements: {len(data)}")
-            diary_entries = [Lesson(**item) for item in data]
+            # diary_entries = [Lesson(**item) for item in data]
+            report_content = json.dumps(data, indent=2, ensure_ascii=False)
+            send_daily_report(report_content)
 
-            homework_entries = [
-                entry
-                for entry in diary_entries
-                if entry.homeworkDone
-            ]
-            print(f"Number of homework found: {len(homework_entries)}")
+
     except Exception as e:
-        print(f"General failure: {e}")
+        print(f"Main - General failure: {e}")
         sys.exit(1)
