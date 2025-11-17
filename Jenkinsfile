@@ -4,6 +4,7 @@ pipeline {
     // Global variables definition
     environment {
         DOCKER_IMAGE = "brunoh6720/jdc-cabanga"
+        DOCKER_HUB_TOKEN = credentials('docker-hub-credentials')
         // TAG = date and time of build
         TAG = sh(returnStdout: true, script: "date +%Y%m%d%H%M%S").trim()
         KUBECONFIG_FILE = "cabanga-cronjob.yaml"
