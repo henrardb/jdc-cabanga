@@ -24,19 +24,25 @@ pipeline {
         stage('Build & Push Image') {
             steps {
                 script {
-                    // Connection to docker Hub
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        // Authentication, build and push with sudo. withRegistry to be investigated later.
+                        // docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
 
-                        // Build image with TAG
-                        def customImage = docker.build("${DOCKER_IMAGE}:${TAG}", "-f Dockerfile .")
+                        echo "Authentification, Build et Push of image..."
+
+                        sh "echo ${env.DOCKER_HUB_TOKEN} | sudo docker login -u brunoh6720 --password-stdin"
+
+                        // Image build
+                        sh "sudo docker build -t ${DOCKER_IMAGE}:${TAG} -f Dockerfile ."
                         echo "Image built: ${DOCKER_IMAGE}:${TAG}"
 
-                        // Push image to Docker Hub
-                        customImage.push()
-                        echo "Image pushed to Docker Hub."
+                        // Image push
+                        sh "sudo docker push ${DOCKER_IMAGE}:${TAG}"
 
-                        // Push TAG for reference
-                        customImage.push("latest")
+                        // Tag push
+                        sh "sudo docker tag ${DOCKER_IMAGE}:${TAG} ${DOCKER_IMAGE}:latest"
+                        sh "sudo docker push ${DOCKER_IMAGE}:latest"
+
+                        sh "sudo docker logout"
                     }
                 }
             }
