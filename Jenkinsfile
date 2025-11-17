@@ -23,12 +23,15 @@ pipeline {
                     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
 
                     // Build image
-                    def customImage = docker.build("${DOCKER_IMAGE}:${TAG}", "-f Dockerfile .")
-                    echo "Image construite: ${DOCKER_IMAGE}:${TAG}"
+                    //def customImage = docker.build("${DOCKER_IMAGE}:${TAG}", "-f Dockerfile .")
+                    sh "docker build -t ${DOCKER_IMAGE}:${TAG} -f Dockerfile ."
+                    echo "Image built: ${DOCKER_IMAGE}:${TAG}"
 
                     // Push image and TAG latest
-                    customImage.push()
-                    customImage.push('latest')
+                    //customImage.push()
+                    //customImage.push('latest')
+                    sh "docker push ${DOCKER_IMAGE}:${TAG}"
+                    sh "docker push ${DOCKER_IMAGE}:latest"
                     }
                 }
             }
