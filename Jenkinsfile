@@ -5,9 +5,9 @@ pipeline {
         // car le Jenkinsfile a été lu.
         node {
             label 'jenkins' // ou l'étiquette de votre nœud si spécifié
-            customWorkspace "/var/jenkins_home/workspace/cabanga-diary"
-            skipDefaultCheckout true
         }
+        customWorkspace "/var/jenkins_home/workspace/cabanga-diary"
+        skipDefaultCheckout true
     }
 
     // Global variables definition
