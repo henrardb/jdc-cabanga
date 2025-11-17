@@ -4,45 +4,27 @@ pipeline {
     // Global variables definition
     environment {
         DOCKER_IMAGE = "brunoh6720/jdc-cabanga"
-        DOCKER_HUB_TOKEN = credentials('docker-hub-credentials')
         // TAG = date and time of build
         TAG = sh(returnStdout: true, script: "date +%Y%m%d%H%M%S").trim()
         KUBECONFIG_FILE = "cabanga-cronjob.yaml"
     }
 
     stages {
-        // --- 1. CLONE AND PREPARATION ---
-        stage('Checkout Code') {
-            steps {
-                script {
-                    echo "Cloning code..."
-                }
-            }
-        }
-
         // --- 2. BUILD & PUSH DOCKER ---
         stage('Build & Push Image') {
             steps {
                 script {
-                        // Authentication, build and push with sudo. withRegistry to be investigated later.
-                        // docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                    echo "Authentification, Build et Push of image..."
 
-                        echo "Authentification, Build et Push of image..."
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
 
-                        sh "echo ${env.DOCKER_HUB_TOKEN} | sudo docker login -u brunoh6720 --password-stdin"
+                    // Build image
+                    def customImage = docker.build("${DOCKER_IMAGE}:${TAG}", "-f Dockerfile .")
+                    echo "Image construite: ${DOCKER_IMAGE}:${TAG}"
 
-                        // Image build
-                        sh "sudo docker build -t ${DOCKER_IMAGE}:${TAG} -f Dockerfile ."
-                        echo "Image built: ${DOCKER_IMAGE}:${TAG}"
-
-                        // Image push
-                        sh "sudo docker push ${DOCKER_IMAGE}:${TAG}"
-
-                        // Tag push
-                        sh "sudo docker tag ${DOCKER_IMAGE}:${TAG} ${DOCKER_IMAGE}:latest"
-                        sh "sudo docker push ${DOCKER_IMAGE}:latest"
-
-                        sh "sudo docker logout"
+                    // Push image and TAG latest
+                    customImage.push()
+                    customImage.push('latest')
                     }
                 }
             }

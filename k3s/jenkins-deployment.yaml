@@ -18,6 +18,10 @@ spec:
         - key: "node-role.kubernetes.io/master"
           operator: "Exists"
           effect: "NoExecute"
+      # Security context (TOBE verified for Docker out of Docker)
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
       containers:
       - name: jenkins
         image: brunoh6720/jenkins-custom:latest
