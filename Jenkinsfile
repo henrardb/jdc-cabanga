@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     // Global variables definition
     environment {
         DOCKER_IMAGE = "brunoh6720/jdc-cabanga"
