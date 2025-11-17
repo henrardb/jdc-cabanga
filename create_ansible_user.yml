@@ -1,0 +1,35 @@
+---
+- name: Create and configure ansible user
+  hosts: k3s_cluster
+  remote_user: bruno
+  become: yes
+
+  tasks:
+    - name: Create ansible-users group
+      ansible.builtin.group:
+        name: ansible-users
+        state: present
+
+    - name: Create ansible user
+      ansible.builtin.user:
+        name: ansible
+        comment: User for automation Ansible / k3s
+        groups: ansible-users
+        append: yes
+        shell: /bin/bash
+        state: present
+
+    - name: Configure ssh keys
+      ansible.builtin.authorized_key:
+        user: ansible
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+        state: present
+
+    - name: Configure sudo
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/ansible_privileges
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+        line: 'ansible ALL=(ALL) NOPASSWD: ALL'
+        state: present

@@ -1,0 +1,35 @@
+---
+- name: Install K3s Master (Control Plane)
+  hosts: k3s_master
+  become: yes
+
+  tasks:
+    - name: Download and install K3s server
+      ansible.builtin.shell: curl -sfL https://get.k3s.io | sh -
+      args:
+
+    - name: Get K3s token from master
+      ansible.builtin.shell: cat /var/lib/rancher/k3s/server/node-token
+      register: k3s_token
+      delegate_to: rpi-master
+
+    # Token is a global variable for the workers
+    - name: Set K3s token fact
+      ansible.builtin.set_fact:
+        K3S_NODE_TOKEN: "{{ k3s_token.stdout }}"
+
+    - name: Get master IP address for workers
+      ansible.builtin.set_fact:
+        MASTER_IP: "{{ ansible_host }}"
+
+- name: Install K3s Worker
+  hosts: k3s_workers
+  become: yes
+
+  tasks:
+    # Get master variables
+    - name: Download and install K3s agent
+      ansible.builtin.shell: |
+        curl -sfL https://get.k3s.io | K3S_URL=https://{{ hostvars['rpi-master']['MASTER_IP'] }}:6443 K3S_TOKEN={{ hostvars['rpi-master']['K3S_NODE_TOKEN'] }} sh -
+      args:
+        creates: /etc/systemd/system/k3s-agent.service
