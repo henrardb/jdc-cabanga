@@ -3,9 +3,7 @@ pipeline {
         // Dire à Jenkins de ne PAS ajouter l'étape de checkout implicite
         // Le code source est déjà disponible dans le répertoire de travail
         // car le Jenkinsfile a été lu.
-        node {
-            label 'jenkins' // ou l'étiquette de votre nœud si spécifié
-        }
+        label 'jenkins'
         customWorkspace "/var/jenkins_home/workspace/cabanga-diary"
         skipDefaultCheckout true
     }
