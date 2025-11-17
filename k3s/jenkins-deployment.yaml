@@ -14,19 +14,32 @@ spec:
       labels:
         app: jenkins
     spec:
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoExecute"
       containers:
       - name: jenkins
-        image: jenkins/jenkins:lts
+        image: brunoh6720/jenkins-custom:latest
         ports:
         - containerPort: 8080
         - containerPort: 50000
         volumeMounts:
         - name: jenkins-home
           mountPath: /var/jenkins_home
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+        env:
+        - name: DOCKER_HOST
+          value: unix:///var/run/docker.sock
       volumes:
       - name: jenkins-home
         persistentVolumeClaim:
           claimName: jenkins-pvc
+      - name: docker-socket
+        hostPath:
+          path: /run/k3s/containerd/containerd.sock
+          type: Socket
 ---
 apiVersion: v1
 kind: Service
