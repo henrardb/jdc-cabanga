@@ -1,37 +1,37 @@
 pipeline {
     agent any
 
+    // Global variables definition
+    environment {
+        IMAGE = "ghcr.io/henrardb/jdccabanga"
+        // TAG = date and time of build
+        TAG = sh(returnStdout: true, script: "date +%Y%m%d%H%M%S").trim()
+        CRONJOB_FILE = "jdccabanga-cronjob.yaml"
+    }
+
     options {
         skipDefaultCheckout(true)
     }
-
-    // Global variables definition
-    environment {
-        DOCKER_IMAGE = "brunoh6720/jdc-cabanga"
-        // TAG = date and time of build
-        TAG = sh(returnStdout: true, script: "date +%Y%m%d%H%M%S").trim()
-        KUBECONFIG_FILE = "cabanga-cronjob.yaml"
-    }
-
     stages {
+        // --- 1. CHECKOUT ---
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         // --- 2. BUILD & PUSH DOCKER ---
         stage('Build & Push Image') {
             steps {
                 script {
-                    echo "Authentification, Build et Push of image..."
+                    echo "Build et Push image..."
 
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-
-                    // Build image
-                    //def customImage = docker.build("${DOCKER_IMAGE}:${TAG}", "-f Dockerfile .")
-                    sh "docker build -t ${DOCKER_IMAGE}:${TAG} -f Dockerfile ."
-                    echo "Image built: ${DOCKER_IMAGE}:${TAG}"
-
-                    // Push image and TAG latest
-                    //customImage.push()
-                    //customImage.push('latest')
-                    sh "docker push ${DOCKER_IMAGE}:${TAG}"
-                    sh "docker push ${DOCKER_IMAGE}:latest"
+                    docker.withRegistry('https://ghcr.io', 'ghcr_pat') {
+                        sh """
+                            docker build -t ${IMAGE}:${TAG} -t ${IMAGE}:latest .
+                            docker push ${IMAGE}:${TAG}
+                            docker push ${IMAGE}:latest
+                        """
                     }
                 }
             }
@@ -42,11 +42,12 @@ pipeline {
             steps {
                 script {
                     // Replace TAG in  YAML
-                    sh "sed -i 's|${DOCKER_IMAGE}:.*|${DOCKER_IMAGE}:${TAG}|g' ${KUBECONFIG_FILE}"
+                    sh """
+                    sed -i 's|image: ${IMAGE}:.*|image: ${IMAGE}:${TAG}|' ${CRONJOB_FILE}
+                    kubectl apply -f ${CRONJOB_FILE} -n jdccabanga
+                    """
 
-                    // K3S deployment
-                    sh "kubectl apply -f ${KUBECONFIG_FILE}"
-                    echo "Cronjob updated with TAG ${TAG}."
+                    echo "Deployment updated with tag ${TAG}"
                 }
             }
         }

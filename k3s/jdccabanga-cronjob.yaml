@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: jdccabanga
+  namespace: jdccabanga
+spec:
+  schedule: "0 7 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: ghcr-secret
+          containers:
+            - name: jdccabanga
+              image: ghcr.io/henrardb/jdccabanga:test
+              imagePullPolicy: Always
+              command: ["python", "-m", "jdccabanga.main"]
+              envFrom:
+              - secretRef:
+                    name: jdccabanga-env
