@@ -57,8 +57,8 @@ pipeline {
                 sh """
                     docker buildx build \
                         --platform linux/amd64, linux/arm64 \
-                        -t ${ENV.REGISTRY}/${ENV.IMAGE}:${ENV.TAG} \
-                        -t ${ENV.REGISTRY}/${ENV.IMAGE}:latest \
+                        -t ${env.REGISTRY}/${env.IMAGE}:${env.TAG} \
+                        -t ${env.REGISTRY}/${env.IMAGE}:latest \
                         --push .
                 """
             }
@@ -71,7 +71,7 @@ pipeline {
                     sh """
                         export KUBECONFIG = \$KUBECONFIG
                         kubectl -n jdccabanga set image cronjob/jdccabanga \
-                            jdccabanga=${ENV.REGISTRY}/${ENV.IMAGE}:${ENV.TAG}
+                            jdccabanga=${env.REGISTRY}/${env.IMAGE}:${env.TAG}
                         kubectl -n jdccabanga create job --from=cronjob/jdccabanga jdccabanga-${env.DATE_TAG}
                     """
                }
