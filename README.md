@@ -32,10 +32,10 @@ The system is composed of:
 ## 🔧 High-Level Architecture
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[GitHub Repository] -->|SCM Polling| B[Jenkins CI/CD]
-    B -->|Buildx multi-arch build| C[GitHub Container Registry]
-    C -->|ARM64 Pull| D[K3s Cluster Raspberry Pi]
+    B -->|Buildx Multi-Arch| C[GHCR Registry]
+    C -->|ARM64 Pull| D[K3s Cluster – Raspberry Pi]
     D --> E[Kubernetes CronJob]
     E --> F[Python App Execution]
     F --> G[Daily Email Report]
