@@ -12,7 +12,7 @@ pipeline {
         // TAG = date and time of build
         DATE_TAG = sh(returnStdout: true, script: "date +%Y%m%d%H%M%S").trim()
         COMMIT = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
-        TAG = ${DATE_TAG}-${COMMIT}
+        TAG = "${DATE_TAG}-${COMMIT}"
     }
 
     //options {
