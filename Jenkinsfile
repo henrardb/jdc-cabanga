@@ -69,7 +69,7 @@ pipeline {
             steps {
                withCredentials([file(credentialsId: 'kubeconfig-k3s', variable: 'KUBECONFIG')]){
                     sh """
-                        export KUBECONFIG = \$KUBECONFIG
+                        export KUBECONFIG=\$KUBECONFIG
                         kubectl -n jdccabanga set image cronjob/jdccabanga \
                             jdccabanga=${env.REGISTRY}/${env.IMAGE}:${env.TAG}
                         kubectl -n jdccabanga create job --from=cronjob/jdccabanga jdccabanga-${env.DATE_TAG}
