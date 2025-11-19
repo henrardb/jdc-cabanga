@@ -56,7 +56,7 @@ pipeline {
 
                 sh """
                     docker buildx build \
-                        --platform linux/amd64, linux/arm64 \
+                        --platform linux/amd64,linux/arm64 \
                         -t ${env.REGISTRY}/${env.IMAGE}:${env.TAG} \
                         -t ${env.REGISTRY}/${env.IMAGE}:latest \
                         --push .
