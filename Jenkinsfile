@@ -1,54 +1,80 @@
 pipeline {
     agent any
 
-    // Global variables definition
-    environment {
-        IMAGE = "ghcr.io/henrardb/jdccabanga"
-        // TAG = date and time of build
-        TAG = sh(returnStdout: true, script: "date +%Y%m%d%H%M%S").trim()
-        CRONJOB_FILE = "jdccabanga-cronjob.yaml"
+    triggers {
+        pollSCM('H/2 * * * *')
     }
 
-    options {
-        skipDefaultCheckout(true)
+    // Global variables definition
+    environment {
+        REGISTRY = "ghcr.io"
+        IMAGE = "henrardb/jdccabanga"
+        // TAG = date and time of build
+        DATE_TAG = sh(returnStdout: true, script: "date +%Y%m%d%H%M%S").trim()
+        COMMIT = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
+        TAG = ${DATE_TAG}-${COMMIT}
     }
+
+    //options {
+    //    skipDefaultCheckout(true)
+    //}
     stages {
-        // --- 1. CHECKOUT ---
+        // --- CHECKOUT ---
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        // --- 2. BUILD & PUSH DOCKER ---
-        stage('Build & Push Image') {
+        // --- PREPARE BUILDX ---
+        stage('Prepare buildx') {
             steps {
-                script {
-                    echo "Build et Push image..."
+                sh """
+                docker buildx create --name multiarch --use --bootstrap || true
+                docker buildx inspect --bootstrap
+                """
+            }
+        }
 
-                    docker.withRegistry('https://ghcr.io', 'ghcr_pat') {
-                        sh """
-                            docker build -t ${IMAGE}:${TAG} -t ${IMAGE}:latest .
-                            docker push ${IMAGE}:${TAG}
-                            docker push ${IMAGE}:latest
-                        """
-                    }
+        // --- LOGIN TO GHCR
+        stage('Login to GHCR') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'ghcr-token',
+                                                    usernameVariable: 'GH_USER',
+                                                    passwordVariable: 'GH_PAT')]) {
+                    sh """
+                    echo \$GH_PAT | docker login ${env.REGISTRY} -u \$GH_USER --password-stdin
+                    """
                 }
             }
         }
 
-        // --- 3. KUBERNETES DEPLOYMENT ---
+        // --- BUILD & PUSH IMAGE ---
+        stage('Build & Push Image') {
+            steps {
+                echo "Build et Push image..."
+
+                sh """
+                    docker buildx build \
+                        --platform linux/amd64, linux/arm64 \
+                        -t ${ENV.REGISTRY}/${ENV.IMAGE}:${ENV.TAG} \
+                        -t ${ENV.REGISTRY}/${ENV.IMAGE}:latest \
+                        --push .
+                """
+            }
+        }
+
+        // --- KUBERNETES DEPLOYMENT ---
         stage('Deploy to K3s') {
             steps {
-                script {
-                    // Replace TAG in  YAML
+               withCredentials([file(credentialsId: 'kubeconfig-k3s', variable: 'KUBECONFIG')]){
                     sh """
-                    sed -i 's|image: ${IMAGE}:.*|image: ${IMAGE}:${TAG}|' ${CRONJOB_FILE}
-                    kubectl apply -f ${CRONJOB_FILE} -n jdccabanga
+                        export KUBECONFIG = \$KUBECONFIG
+                        kubectl -n jdccabanga set image cronjob/jdccabanga \
+                            jdccabanga=${ENV.REGISTRY}/${ENV.IMAGE}:${ENV.TAG}
+                        kubectl -n jdccabanga create job --from=cronjob/jdccabanga jdccabanga-${env.DATE_TAG}
                     """
-
-                    echo "Deployment updated with tag ${TAG}"
-                }
+               }
             }
         }
     }
