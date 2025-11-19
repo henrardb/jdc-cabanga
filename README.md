@@ -29,17 +29,7 @@ The system is composed of:
 - **K3s Cluster** — runs CronJob and sends email  
 - **Kubernetes Secrets** — store API tokens and email credentials  
 
-## 🔧 High-Level Architecture
-
-```mermaid
-flowchart TD
-    A[GitHub Repository] -->|SCM Polling| B[Jenkins CI/CD]
-    B -->|Buildx Multi-Arch| C[GHCR Registry]
-    C -->|ARM64 Pull| D[K3s Cluster – Raspberry Pi]
-    D --> E[Kubernetes CronJob]
-    E --> F[Python App Execution]
-    F --> G[Daily Email Report]
-```
+---
 
 # 🙌 Author
 
