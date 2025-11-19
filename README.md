@@ -35,7 +35,7 @@ The system is composed of:
 flowchart LR
     A[GitHub Repository] -->|SCM Polling| B[Jenkins CI/CD]
     B -->|Buildx multi-arch build| C[GitHub Container Registry]
-    C -->|ARM64 Pull| D[K3s Cluster \(Raspberry Pi\)]
+    C -->|ARM64 Pull| D[K3s Cluster Raspberry Pi]
     D --> E[Kubernetes CronJob]
     E --> F[Python App Execution]
     F --> G[Daily Email Report]
