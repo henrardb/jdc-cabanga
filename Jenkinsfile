@@ -1,5 +1,31 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            label 'kaniko'
+            defaultContainer 'jnlp'
+            yaml """
+                apiVersion: v1
+                kind: Pod
+                metadata:
+                    labels:
+                        jenkins/label: kaniko
+                spec:
+                    containers:
+                    - name: kaniko
+                      image: gcr.io/kaniko-project/executor:latest
+                      command: ["sleep"]
+                      args: ["99d"]
+                      volumeMounts:
+                      - name: docker-config
+                        mountPath: /kaniko/.docker
+                        subPath: .dockerconfigjson
+                    volumes:
+                    - name: docker-config
+                      secret:
+                        secretName: ghcr-secret
+            """
+        }
+    }
 
     triggers {
         pollSCM('H/2 * * * *')
@@ -15,9 +41,6 @@ pipeline {
         TAG = "${DATE_TAG}-${COMMIT}"
     }
 
-    //options {
-    //    skipDefaultCheckout(true)
-    //}
     stages {
         // --- CHECKOUT ---
         stage('Checkout') {
@@ -26,41 +49,18 @@ pipeline {
             }
         }
 
-        // --- PREPARE BUILDX ---
-        stage('Prepare buildx') {
+        stage('Build & push with Kaniko') {
             steps {
-                sh """
-                docker buildx create --name multiarch --use --bootstrap || true
-                docker buildx inspect --bootstrap
-                """
-            }
-        }
-
-        // --- LOGIN TO GHCR
-        stage('Login to GHCR') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'ghcr-token',
-                                                    usernameVariable: 'GH_USER',
-                                                    passwordVariable: 'GH_PAT')]) {
+                container('kaniko') {
                     sh """
-                    echo \$GH_PAT | docker login ${env.REGISTRY} -u \$GH_USER --password-stdin
+                        /kaniko/executor \
+                            --context ${WORKSPACE} \
+                            --dockerfile ${WORKSPACE}/Dockerfile \
+                            --destination=${env.REGISTRY}/${env.IMAGE}:${env.TAG} \
+                            --destination=${env.REGISTRY}/${env.IMAGE}:latest \
+                            --digest-file=/dev/null
                     """
                 }
-            }
-        }
-
-        // --- BUILD & PUSH IMAGE ---
-        stage('Build & Push Image') {
-            steps {
-                echo "Build et Push image..."
-
-                sh """
-                    docker buildx build \
-                        --platform linux/amd64,linux/arm64 \
-                        -t ${env.REGISTRY}/${env.IMAGE}:${env.TAG} \
-                        -t ${env.REGISTRY}/${env.IMAGE}:latest \
-                        --push .
-                """
             }
         }
 
