@@ -13,8 +13,7 @@ pipeline {
                     containers:
                     - name: kaniko
                       image: gcr.io/kaniko-project/executor:latest
-                      command: ["/busybox/sh"]
-                      args: ["-c", "sleep 99d"]
+                      tty: true
                       volumeMounts:
                       - name: docker-config
                         mountPath: /kaniko/.docker/config.json
