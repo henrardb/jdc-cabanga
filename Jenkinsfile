@@ -1,29 +1,31 @@
 pipeline {
     agent {
         kubernetes {
-            label 'kaniko'
-            defaultContainer 'jnlp'
+            label 'buildkit'
+            defaultContainer 'buildkit'
             yaml """
                 apiVersion: v1
                 kind: Pod
                 metadata:
-                    labels:
-                        jenkins/label: kaniko
+                  labels:
+                    jenkins/label: buildkit
                 spec:
-                    containers:
-                    - name: kaniko
-                      image: gcr.io/kaniko-project/executor:latest
-                      tty: true
+                  containers:
+                    - name: buildkit
+                      image: moby/buildkit:latest
+                      securityContext:
+                        privileged: true
+                      command:
+                        - buildkitd
+                      args:
+                        - --addr
+                        - unix:///run/buildkit/buildkitd.sock
                       volumeMounts:
-                      - name: docker-config
-                        mountPath: /kaniko/.docker/config.json
-                        subPath: .dockerconfigjson
+                        - name: docker-config
+                          mountPath: /root/.docker/config.json
+                          subPath: .dockerconfigjson
 
-                    - name: keepalive
-                      image: busybox
-                      command: ["sh", "-c", "sleep 999999999"]
-
-                    volumes:
+                  volumes:
                     - name: docker-config
                       secret:
                         secretName: ghcr-secret
@@ -53,16 +55,16 @@ pipeline {
             }
         }
 
-        stage('Build & push with Kaniko') {
+        stage('Build & Push with BuildKit') {
             steps {
-                container('kaniko') {
+                container('buildkit') {
                     sh """
-                        /kaniko/executor \
-                            --context ${WORKSPACE} \
-                            --dockerfile ${WORKSPACE}/Dockerfile \
-                            --destination=${env.REGISTRY}/${env.IMAGE}:${env.TAG} \
-                            --destination=${env.REGISTRY}/${env.IMAGE}:latest \
-                            --digest-file=/dev/null
+                        buildctl build \
+                          --frontend=dockerfile.v0 \
+                          --local context=. \
+                          --local dockerfile=. \
+                          --output type=image,name=${env.REGISTRY}/${env.IMAGE}:${env.TAG},push=true \
+                          --output type=image,name=${env.REGISTRY}/${env.IMAGE}:latest,push=true
                     """
                 }
             }
