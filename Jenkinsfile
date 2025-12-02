@@ -11,6 +11,7 @@ pipeline {
                     jenkins/label: buildkit
                 spec:
                   containers:
+                    # BuildKit daemon + client
                     - name: buildkit
                       image: moby/buildkit:latest
                       securityContext:
@@ -24,11 +25,31 @@ pipeline {
                         - name: docker-config
                           mountPath: /root/.docker/config.json
                           subPath: .dockerconfigjson
+                        - name: workspace-volume
+                          mountPath: /home/jenkins/agent
+
+                    # Jenkins agent (jnlp)
+                    - name: jnlp
+                      image: jenkins/inbound-agent:latest
+                      volumeMounts:
+                        - name: workspace-volume
+                          mountPath: /home/jenkins/agent
+
+                    # kubectl for deployment
+                    - name: kubectl
+                      image: bitnami/kubectl:latest
+                      command: ["sleep"]
+                      args: ["infinity"]
+                      volumeMounts:
+                        - name: workspace-volume
+                          mountPath: /home/jenkins/agent
 
                   volumes:
                     - name: docker-config
                       secret:
                         secretName: ghcr-secret
+                    - name: workspace-volume
+                      emptyDir: {}
             """
         }
     }
@@ -79,6 +100,7 @@ pipeline {
                     sh """
                         buildctl build \
                           --frontend=dockerfile.v0 \
+                          --opt platform linux/amd64, linux/arm64 \
                           --local context=. \
                           --local dockerfile=. \
                           --output type=image,name=${env.REGISTRY}/${env.IMAGE}:${env.TAG},push=true \
@@ -92,12 +114,14 @@ pipeline {
         stage('Deploy to K3s') {
             steps {
                withCredentials([file(credentialsId: 'kubeconfig-k3s', variable: 'KUBECONFIG')]){
-                    sh """
-                        export KUBECONFIG=\$KUBECONFIG
-                        kubectl -n jdccabanga set image cronjob/jdccabanga \
-                            jdccabanga=${env.REGISTRY}/${env.IMAGE}:${env.TAG}
-                        kubectl -n jdccabanga create job --from=cronjob/jdccabanga jdccabanga-${env.DATE_TAG}
-                    """
+                    container('kubectl') {
+                        sh """
+                            export KUBECONFIG=\$KUBECONFIG
+                            kubectl -n jdccabanga set image cronjob/jdccabanga \
+                                jdccabanga=${env.REGISTRY}/${env.IMAGE}:${env.TAG}
+                            kubectl -n jdccabanga create job --from=cronjob/jdccabanga jdccabanga-${env.DATE_TAG}
+                        """
+                    }
                }
             }
         }
