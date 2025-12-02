@@ -41,10 +41,6 @@ pipeline {
     environment {
         REGISTRY = "ghcr.io"
         IMAGE = "henrardb/jdccabanga"
-        // TAG = date and time of build
-        DATE_TAG = sh(returnStdout: true, script: "date +%Y%m%d%H%M%S").trim()
-        COMMIT = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
-        TAG = "${DATE_TAG}-${COMMIT}"
     }
 
     stages {
@@ -57,7 +53,23 @@ pipeline {
 
         stage('Prepare Git') {
             steps {
-                sh "git config --global --add safe.directory '${WORKSPACE}'"
+                container('buildkit') {
+                    sh """
+                        git config --global --add safe.directory \"${WORKSPACE}\"
+                    """
+                }
+            }
+        }
+
+        stage('Compute Build Metadata') {
+            steps {
+                container('buildkit') {
+                    script {
+                        env.DATE_TAG = sh(script: "date +%Y%m%d%H%M%S", returnStdout: true).trim()
+                        env.COMMIT   = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                        env.TAG      = "${env.DATE_TAG}-${env.COMMIT}"
+                    }
+                }
             }
         }
 
