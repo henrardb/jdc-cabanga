@@ -37,7 +37,7 @@ pipeline {
 
                     # kubectl for deployment
                     - name: kubectl
-                      image: bitnami/kubectl:1.29-debian-11
+                      image: beli/kubectl-shell
                       command: ["sleep"]
                       args: ["infinity"]
                       volumeMounts:
