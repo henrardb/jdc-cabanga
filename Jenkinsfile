@@ -100,7 +100,7 @@ pipeline {
                     sh """
                         buildctl build \
                           --frontend=dockerfile.v0 \
-                          --opt platform=linux/amd64, linux/arm64 \
+                          --opt platform=linux/amd64,linux/arm64 \
                           --local context=. \
                           --local dockerfile=. \
                           --output type=image,name=${env.REGISTRY}/${env.IMAGE}:${env.TAG},push=true \
