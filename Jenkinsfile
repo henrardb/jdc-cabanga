@@ -18,6 +18,11 @@ pipeline {
                       - name: docker-config
                         mountPath: /kaniko/.docker/config.json
                         subPath: .dockerconfigjson
+
+                    - name: keepalive
+                      image: busybox
+                      command: ["sh", "-c", "sleep 999999999"]
+
                     volumes:
                     - name: docker-config
                       secret:
