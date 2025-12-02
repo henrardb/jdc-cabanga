@@ -55,6 +55,12 @@ pipeline {
             }
         }
 
+        stage('Prepare Git') {
+            steps {
+                sh "git config --global --add safe.directory '${WORKSPACE}'"
+            }
+        }
+
         stage('Build & Push with BuildKit') {
             steps {
                 container('buildkit') {
