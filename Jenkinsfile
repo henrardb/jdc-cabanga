@@ -37,7 +37,7 @@ pipeline {
 
                     # kubectl for deployment
                     - name: kubectl
-                      image: beli/kubectl-shell
+                      image: portainer/kubectl-shell:2.33.5
                       command: ["sleep"]
                       args: ["infinity"]
                       volumeMounts:
