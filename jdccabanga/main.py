@@ -64,9 +64,13 @@ if __name__ == "__main__":
         data = get_diary_data(access_token, DIARY_URL)
 
         if data:
-            # diary_entries = [Lesson(**item) for item in data]
-            report_content = json.dumps(data, indent=2, ensure_ascii=False)
-            send_daily_report(report_content)
+            diary_entries = [Lesson(**item) for item in data]
+            for entry in diary_entries:
+                # Need: date, lessonName, lessonSubject, homework
+                print(entry.lessonName)
+            #report_content = json.dumps(data, indent=2, ensure_ascii=False)
+            #print(report_content)
+            #send_daily_report(report_content)
 
 
     except Exception as e:
