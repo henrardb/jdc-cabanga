@@ -4,7 +4,12 @@ from email.mime.multipart import MIMEMultipart
 import ssl
 import os
 
-def send_daily_report(report_content: str, subject: str = "JDC Cabanga Report"):
+def send_daily_report(
+        html_content: str,
+        subject: str = "JDC Cabanga: Résumé des devoirs",
+        plain_fallback: str | None = None,
+):
+
     SMTP_SERVER = os.getenv("SMTP_SERVER")
     SMTP_PORT = int(os.getenv("SMTP_PORT"))
     SENDER_EMAIL = os.getenv("SENDER_EMAIL")
@@ -15,11 +20,19 @@ def send_daily_report(report_content: str, subject: str = "JDC Cabanga Report"):
         print("Environment variables missing")
         return
 
-    msg = MIMEMultipart()
+    if plain_fallback is None:
+        plain_fallback = "Your email client does not support HTML. Please view this message in an HTML-capable client."
+
+    msg = MIMEMultipart("alternative")
     msg['From'] = SENDER_EMAIL
     msg['Subject'] = subject
     msg['To'] = RECEIVER_EMAIL
-    msg.attach(MIMEText(report_content, "plain"))
+
+    part_text = MIMEText(plain_fallback, "plain", "utf-8")
+    part_html = MIMEText(html_content, "html", "utf-8")
+
+    msg.attach(part_text)
+    msg.attach(part_html)
 
     try:
         context = ssl.create_default_context()
@@ -27,7 +40,6 @@ def send_daily_report(report_content: str, subject: str = "JDC Cabanga Report"):
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls(context=context)
             server.login(SENDER_EMAIL, SMTP_PASSWORD)
-
             server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg.as_string())
             print("Email sent")
     except Exception as e:

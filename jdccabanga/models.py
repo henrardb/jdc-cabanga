@@ -4,7 +4,7 @@ from datetime import date, time
 
 class Lesson(BaseModel):
     # Pydantic model for a lesson
-    date: str = Field(..., description="Date of the lesson")
+    date: Optional[str] = Field(None, description="Date of the lesson")
     hour: str = Field(..., description="Time of the lesson")
     lessonName: str = Field(..., description="Name of the lesson")
     lessonSubject: Optional[str] = Field(None, description="Subject of the lesson")
