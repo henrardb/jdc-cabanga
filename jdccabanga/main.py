@@ -8,13 +8,14 @@ from datetime import date, timedelta
 from jdccabanga.models import Lesson
 from .auth_manager import refresh_access_token
 from .notifier import send_daily_report
+from jdccabanga.formatter import generate_html_table
 
 
 SCHOOL_CODE = os.getenv("SCHOOL_CODE")
 REFRESH_TOKEN = os.getenv("REFRESH_TOKEN")
 STUDENT_ID = os.getenv("STUDENT_ID")
 
-TODAY = date(2025, 12, 2)
+TODAY = date(2026, 1, 5)
 END_DATE = TODAY + timedelta(days=14)
 
 DIARY_URL = (
@@ -50,7 +51,7 @@ def get_diary_data(token: str, url: str):
 
 
 if __name__ == "__main__":
-    # Check if environment variable REFRESH_TOKEN exists, leave otherwize
+    # Check if environment variable REFRESH_TOKEN exists, leave otherwise
     if not REFRESH_TOKEN:
         print("Environment variable REFRESH_TOKEN does not exist")
         sys.exit(1)
@@ -65,12 +66,14 @@ if __name__ == "__main__":
 
         if data:
             diary_entries = [Lesson(**item) for item in data]
-            for entry in diary_entries:
-                # Need: date, lessonName, lessonSubject, homework
-                print(entry.lessonName)
-            #report_content = json.dumps(data, indent=2, ensure_ascii=False)
-            #print(report_content)
-            #send_daily_report(report_content)
+
+            for i, entry in enumerate(diary_entries):
+                print(i, type(entry), entry)
+
+            html = generate_html_table(diary_entries)
+            print(html)
+
+            send_daily_report(html)
 
 
     except Exception as e:
