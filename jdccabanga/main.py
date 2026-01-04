@@ -15,7 +15,7 @@ SCHOOL_CODE = os.getenv("SCHOOL_CODE")
 REFRESH_TOKEN = os.getenv("REFRESH_TOKEN")
 STUDENT_ID = os.getenv("STUDENT_ID")
 
-TODAY = date(2026, 01, 5)
+TODAY = date(2026, 1, 5)
 END_DATE = TODAY + timedelta(days=14)
 
 DIARY_URL = (
